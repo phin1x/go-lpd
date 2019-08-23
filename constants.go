@@ -2,7 +2,15 @@ package go_lpd
 
 // the descriptions copied from https://www.ietf.org/rfc/rfc1179.txt
 
-var Separator = 0x20
+var (
+	Separator = " "
+	LineEnding = "\n"
+)
+
+var (
+	// the server has to acknowledge all commands with a octet of zero bytes
+	Acknowledge byte = 0x0
+)
 
 type DaemonCommand uint8
 
@@ -92,7 +100,7 @@ const (
 	RemoveJobs DaemonCommand = 0x05
 )
 
-type SubCommand uint8
+type SubCommand byte
 
 const (
 	/*
@@ -128,7 +136,7 @@ const (
 	   the file being sent is complete.  A second level of acknowledgement
 	   processing must occur at this point.
 	 */
-	ControlFile SubCommand = 0x02
+	SendControlFile SubCommand = 0x02
 
 	/*
 	      +----+-------+----+------+----+
@@ -153,11 +161,11 @@ const (
 	   processing must occur at this point.
 	 */
 
-	DataFile SubCommand = 0x03
+	SendDataFile SubCommand = 0x03
 )
 
 // the control file commands are defined as string, i defined them as ascii hex values
-type ControlFileCommand uint8
+type ControlFileCommand byte
 
 const (
 	/*
