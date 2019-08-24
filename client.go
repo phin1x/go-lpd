@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/user"
+	"path"
 	"strconv"
 )
 
@@ -19,7 +20,28 @@ type Client struct {
 	dest string
 }
 
-func (c *Client) PrintFile(queue string,  doc Document, cf ControlFile, of OutputFormat) (err error) {
+func (c *Client) PrintFile(filePath, queue string) error {
+	fileStats, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return err
+	}
+
+	fileName := path.Base(filePath)
+
+	document, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer document.Close()
+
+	return c.PrintDocument(Document{
+			Document: document,
+			Name:     fileName,
+			Size:     int(fileStats.Size()),
+	}, queue, nil, PlainTextFile)
+}
+
+func (c *Client) PrintDocument(doc Document, queue string, cf ControlFile, of OutputFormat) (err error) {
 	// get hostname
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -48,8 +70,10 @@ func (c *Client) PrintFile(queue string,  doc Document, cf ControlFile, of Outpu
 	controlFile[ControlFileCommand(of)] = dataFileName
 
 	// append custom cf params
-	for cmd, value := range cf {
-		controlFile[cmd] = value
+	if cf != nil {
+		for cmd, value := range cf {
+			controlFile[cmd] = value
+		}
 	}
 
 	// open connection
