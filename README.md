@@ -28,7 +28,7 @@ client.PrintFile("/path/to/file", "my-printer", nil)
 * test print document / file, print jobs and delete jobs method
 * parse result in get queue state methods
 * add usernmae and job number filter in queue state and delete job methods
-* write some tests
+* write more tests
 
 ## Licence
 
