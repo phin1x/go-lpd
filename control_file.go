@@ -8,33 +8,27 @@ import (
 
 type ControlFile map[ControlFileCommand]string
 
-func NewControlFileEncoder(w io.Writer) *ControlFileEncoder {
-	return &ControlFileEncoder{w}
-}
+func (c *ControlFile) Encode() ([]byte, error) {
+	buf := new(bytes.Buffer)
 
-type ControlFileEncoder struct {
-	w io.Writer
-}
-
-func (c *ControlFileEncoder) Encode(cf ControlFile) (err error) {
-	for cmd, value := range cf {
-		_, err = c.w.Write([]byte{byte(cmd)})
+	for cmd, value := range *c {
+		_, err := buf.Write([]byte{byte(cmd)})
 		if err != nil {
-			return
+			return nil, err
 		}
 
-		_, err = c.w.Write([]byte(value))
+		_, err = buf.Write([]byte(value))
 		if err != nil {
-			return
+			return nil, err
 		}
 
-		_, err = c.w.Write([]byte(LineEnding))
+		_, err = buf.Write([]byte(LineEnding))
 		if err != nil {
-			return
+			return nil, err
 		}
 	}
 
-	return nil
+	return buf.Bytes(), nil
 }
 
 func NewControlFileDecoder(r io.Reader) *ControlFileDecoder {
@@ -42,24 +36,24 @@ func NewControlFileDecoder(r io.Reader) *ControlFileDecoder {
 }
 
 type ControlFileDecoder struct {
-	r io.Reader
+	reader io.Reader
 }
 
-func (c *ControlFileDecoder) Decode(cf ControlFile, size int) (err error) {
+func (c *ControlFileDecoder) Decode(size int) (ControlFile, error) {
 	data := make([]byte, size)
-	readed, err := c.r.Read(data)
+	readed, err := c.reader.Read(data)
 	if err != nil {
-		return
+		return nil, err
 	}
 	if readed != size {
-		return fmt.Errorf("could not read %d bytes from reader", size)
+		return nil, fmt.Errorf("could not read %d bytes from reader", size)
 	}
 
-	cf = ControlFile{}
+	cf := ControlFile{}
 
 	for _, line := range bytes.Split(data, []byte(LineEnding)) {
 		cf[ControlFileCommand(line[0])] = string(line[1:])
 	}
 
-	return nil
+	return cf, nil
 }

@@ -1,7 +1,6 @@
 package go_lpd
 
 import (
-	"bytes"
 	"io"
 	"net"
 	"os"
@@ -81,13 +80,13 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 	defer SendAbortOnError(conn, err)
 
 	// write controlfile to buffer, so we can capture the size
-	controlFileData := new(bytes.Buffer)
-	if err = NewControlFileEncoder(controlFileData).Encode(controlFile); err != nil {
+	encodedControlFile, err := controlFile.Encode()
+	if err != nil {
 		return
 	}
 
 	// send controlfile subcommand
-	err = EncodeCommandLine(conn, byte(SendControlFile), []string{strconv.Itoa(controlFileData.Len()), controlFileName})
+	err = EncodeCommandLine(conn, byte(SendControlFile), []string{strconv.Itoa(len(encodedControlFile)), controlFileName})
 	if err != nil {
 		return
 	}
@@ -96,7 +95,7 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 	}
 
 	// send controlfile
-	_, err = conn.Write(controlFileData.Bytes())
+	_, err = conn.Write(encodedControlFile)
 	if err != nil {
 		return
 	}
