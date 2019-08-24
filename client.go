@@ -1,6 +1,7 @@
-package go_lpd
+package lpd
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -15,12 +16,18 @@ type Document struct {
 	Name     string
 }
 
+func NewClient(remote string, port int) *Client {
+	return &Client{
+		dest: fmt.Sprintf("%s:%d", remote, port),
+	}
+}
+
 type Client struct {
 	// dest format is host:port
 	dest string
 }
 
-func (c *Client) PrintFile(filePath, queue string) error {
+func (c *Client) PrintFile(filePath, queue string, cf ControlFile) error {
 	fileStats, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		return err
@@ -38,7 +45,7 @@ func (c *Client) PrintFile(filePath, queue string) error {
 			Document: document,
 			Name:     fileName,
 			Size:     int(fileStats.Size()),
-	}, queue, nil, PlainTextFile)
+	}, queue, cf, PlainTextFile)
 }
 
 func (c *Client) PrintDocument(doc Document, queue string, cf ControlFile, of OutputFormat) (err error) {

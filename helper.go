@@ -1,4 +1,4 @@
-package go_lpd
+package lpd
 
 import (
 	"errors"

@@ -1,4 +1,4 @@
-package go_lpd
+package lpd
 
 // the descriptions copied from https://www.ietf.org/rfc/rfc1179.txt
 

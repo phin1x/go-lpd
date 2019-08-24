@@ -12,11 +12,23 @@ go get -u github.com/phin1x/go-lpd
 
 ## Features
 
-* Work in progress!
+* rfc1179 compatible client
+* create custom lpd requests
+* parse control files
 
 ## Examples
 
-* Work in progress!
+Print a file
+```go
+client := lpd.NewClient("printserver", 515)
+client.PrintFile("/path/to/file", "my-printer", nil)
+```
+## TODO's
+
+* test print document / file, print jobs and delete jobs method
+* parse result in get queue state methods
+* add usernmae and job number filter in queue state and delete job methods
+* write some tests
 
 ## Licence
 
