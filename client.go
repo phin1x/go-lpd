@@ -1,6 +1,8 @@
 package go_lpd
 
 import (
+	"bytes"
+	"io"
 	"net"
 	"os"
 	"os/user"
@@ -31,6 +33,13 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 	if os.IsNotExist(err) {
 		return err
 	}
+
+	// open file
+	fileHandle, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer fileHandle.Close()
 
 	fileName := path.Base(file)
 	controlFileName := "cfA000" + hostname
@@ -71,9 +80,14 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 	// ensure the we send abort if we return with error
 	defer SendAbortOnError(conn, err)
 
+	// write controlfile to buffer, so we can capture the size
+	controlFileData := new(bytes.Buffer)
+	if err = NewControlFileEncoder(controlFileData).Encode(controlFile); err != nil {
+		return
+	}
+
 	// send controlfile subcommand
-	// FIXME: we have to send the size of the control file, not the file to be printed
-	err = EncodeCommandLine(conn, byte(SendControlFile), []string{strconv.FormatInt(fileStat.Size(), 10), controlFileName})
+	err = EncodeCommandLine(conn, byte(SendControlFile), []string{strconv.Itoa(controlFileData.Len()), controlFileName})
 	if err != nil {
 		return
 	}
@@ -82,10 +96,30 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 	}
 
 	// send controlfile
-	if err = NewControlFileEncoder(conn).Encode(controlFile); err != nil {
+	_, err = conn.Write(controlFileData.Bytes())
+	if err != nil {
 		return
 	}
-	
+	if err = CheckAcknowledge(conn); err != nil {
+		return
+	}
+
+	// send datafile subcommand
+	err = EncodeCommandLine(conn, byte(SendDataFile), []string{strconv.FormatInt(fileStat.Size(), 10), dataFileName})
+	if err != nil {
+		return
+	}
+	if err = CheckAcknowledge(conn); err != nil {
+		return
+	}
+
+	// send spool file
+	if _, err = io.Copy(conn, fileHandle); err != nil {
+		return
+	}
+	if err = CheckAcknowledge(conn); err != nil {
+		return
+	}
 
 	return nil
 }
