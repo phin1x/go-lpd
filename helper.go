@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func EncodeCommandLine(w io.Writer, cmd byte, opts []string) (err error) {
+func SendCommandLine(w io.Writer, cmd byte, opts []string) (err error) {
 	_, err = w.Write([]byte{cmd})
 	if err != nil {
 		return

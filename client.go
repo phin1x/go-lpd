@@ -5,16 +5,21 @@ import (
 	"net"
 	"os"
 	"os/user"
-	"path"
 	"strconv"
 )
+
+type Document struct {
+	Document io.Reader
+	Size     int
+	Name     string
+}
 
 type Client struct {
 	// dest format is host:port
 	dest string
 }
 
-func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err error) {
+func (c *Client) PrintFile(printer string,  doc Document, cf ControlFile) (err error) {
 	// get hostname
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -27,20 +32,6 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 		return
 	}
 
-	// check file
-	fileStat, err := os.Stat(file)
-	if os.IsNotExist(err) {
-		return err
-	}
-
-	// open file
-	fileHandle, err := os.Open(file)
-	if err != nil {
-		return err
-	}
-	defer fileHandle.Close()
-
-	fileName := path.Base(file)
 	controlFileName := "cfA000" + hostname
 	dataFileName := "dfA000" + hostname
 
@@ -48,12 +39,12 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 	controlFile := make(ControlFile)
 	controlFile[Hostname] = hostname
 	controlFile[UserID] = currentUser.Username
-	controlFile[JobName] = fileName
+	controlFile[JobName] = doc.Name
 	controlFile[BannerClass] = hostname
 	controlFile[PrintBanner] = currentUser.Username
 	controlFile[PlainTextFile] = dataFileName
 	controlFile[UnlinkDataFile] = dataFileName
-	controlFile[SourceFileName] = fileName
+	controlFile[SourceFileName] = doc.Name
 
 	// append custom cf params
 	for cmd, value := range cf {
@@ -68,7 +59,7 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 	defer conn.Close()
 
 	// send receive job command
-	err = EncodeCommandLine(conn, byte(ReceiveJob), []string{printer})
+	err = SendCommandLine(conn, byte(ReceiveJob), []string{printer})
 	if err != nil {
 		return
 	}
@@ -85,8 +76,8 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 		return
 	}
 
-	// send controlfile subcommand
-	err = EncodeCommandLine(conn, byte(SendControlFile), []string{strconv.Itoa(len(encodedControlFile)), controlFileName})
+	// send controlfile sub command
+	err = SendCommandLine(conn, byte(SendControlFile), []string{strconv.Itoa(len(encodedControlFile)), controlFileName})
 	if err != nil {
 		return
 	}
@@ -103,8 +94,8 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 		return
 	}
 
-	// send datafile subcommand
-	err = EncodeCommandLine(conn, byte(SendDataFile), []string{strconv.FormatInt(fileStat.Size(), 10), dataFileName})
+	// send datafile sub command
+	err = SendCommandLine(conn, byte(SendDataFile), []string{strconv.Itoa(doc.Size), dataFileName})
 	if err != nil {
 		return
 	}
@@ -113,7 +104,7 @@ func (c *Client) PrintFile(printer string, cf ControlFile, file string) (err err
 	}
 
 	// send spool file
-	if _, err = io.Copy(conn, fileHandle); err != nil {
+	if _, err = io.Copy(conn, doc.Document); err != nil {
 		return
 	}
 	if err = CheckAcknowledge(conn); err != nil {
