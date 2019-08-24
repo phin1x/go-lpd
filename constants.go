@@ -12,7 +12,7 @@ var (
 	Acknowledge byte = 0x0
 )
 
-type DaemonCommand uint8
+type DaemonCommand byte
 
 const (
 	/*
@@ -383,7 +383,11 @@ const (
 	   default.
 	 */
 	TroffSFont ControlFileCommand = 0x34
+)
 
+type OutputFormat byte
+
+const(
 	/*
 	      +---+------+----+
 	      | c | file | LF |
@@ -394,7 +398,7 @@ const (
 	   This command causes the data file to be plotted, treating the data as
 	   CIF (CalTech Intermediate Form) graphics language. [2]
 	 */
-	CIFFile ControlFileCommand = 0x63
+	CIFFile OutputFormat = 0x63
 
 	/*
 	      +---+------+----+
@@ -406,7 +410,7 @@ const (
 	   This command causes the data file to be printed, treating the data as
 	   DVI (TeX output). [3]
 	 */
-	DVIFile ControlFileCommand = 0x64
+	DVIFile OutputFormat = 0x64
 
 	/*
 	      +---+------+----+
@@ -420,7 +424,7 @@ const (
 	   which are not in the following list are discarded: HT, CR, FF, LF,
 	   and BS.
 	 */
-	PlainTextFile ControlFileCommand = 0x66
+	PlainTextFile OutputFormat = 0x66
 
 	/*
 	      +---+------+----+
@@ -432,7 +436,7 @@ const (
 	   This command causes the data file to be plotted, treating the data as
 	   output from the Berkeley Unix plot library. [1]
 	 */
-	PlotFile ControlFileCommand = 0x67
+	PlotFile OutputFormat = 0x67
 
 	/*
 	      +---+------+----+
@@ -444,7 +448,7 @@ const (
 	   This command causes the specified data file to printed without
 	   filtering the control characters (as is done with the 'f' command).
 	 */
-	PrintWithLeavingControlCharacters ControlFileCommand = 0x6c
+	PrintWithLeavingControlCharacters OutputFormat = 0x6c
 
 	/*
 	      +---+------+----+
@@ -456,7 +460,7 @@ const (
 	   This command prints the data file to be printed, treating the data as
 	   ditroff output. [4]
 	 */
-	DitroffFile ControlFileCommand = 0x6e
+	DitroffFile OutputFormat = 0x6e
 
 	/*
 	      +---+------+----+
@@ -468,7 +472,7 @@ const (
 	   This command prints the data file to be printed, treating the data as
 	   standard Postscript input.
 	 */
-	PostscriptFile ControlFileCommand = 0x6f
+	PostscriptFile OutputFormat = 0x6f
 
 	/*
 	      +---+------+----+
@@ -486,7 +490,7 @@ const (
 	   started with a new page number.  (There is no way to specify the
 	   length of the page.)
 	 */
-	PRFormat ControlFileCommand = 0x70
+	PRFormat OutputFormat = 0x70
 
 	/*
 	      +---+------+----+
@@ -501,7 +505,7 @@ const (
 	   Most FORTRAN programmers also expect "-" (triple space) to work as
 	   well.
 	 */
-	FortranCarriageControlFormat ControlFileCommand = 0x72
+	FortranCarriageControlFormat OutputFormat = 0x72
 
 	/*
 	      +---+------+----+
@@ -514,7 +518,7 @@ const (
 	   phototypesetter input.  [5] This is the standard output of the Unix
 	   "troff" command.
 	 */
-	TroffFormat ControlFileCommand = 0x74
+	TroffFormat OutputFormat = 0x74
 
 	/*
 	      +---+------+----+
@@ -525,6 +529,6 @@ const (
 
 	   This command prints a Sun raster format file. [6]
 	 */
-	RasterFormat ControlFileCommand = 0x76
+	RasterFormat OutputFormat = 0x76
 )
 

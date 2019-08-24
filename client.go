@@ -19,7 +19,7 @@ type Client struct {
 	dest string
 }
 
-func (c *Client) PrintFile(printer string,  doc Document, cf ControlFile) (err error) {
+func (c *Client) PrintFile(printer string,  doc Document, cf ControlFile, of OutputFormat) (err error) {
 	// get hostname
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -42,9 +42,10 @@ func (c *Client) PrintFile(printer string,  doc Document, cf ControlFile) (err e
 	controlFile[JobName] = doc.Name
 	controlFile[BannerClass] = hostname
 	controlFile[PrintBanner] = currentUser.Username
-	controlFile[PlainTextFile] = dataFileName
 	controlFile[UnlinkDataFile] = dataFileName
 	controlFile[SourceFileName] = doc.Name
+
+	controlFile[ControlFileCommand(of)] = dataFileName
 
 	// append custom cf params
 	for cmd, value := range cf {

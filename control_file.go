@@ -52,7 +52,7 @@ func (c *ControlFileDecoder) Decode(size int) (ControlFile, error) {
 	cf := ControlFile{}
 
 	for _, line := range bytes.Split(data, []byte(LineEnding)) {
-		cf[ControlFileCommand(line[0])] = string(line[1:])
+		cf[line[0]] = string(line[1:])
 	}
 
 	return cf, nil
