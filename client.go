@@ -19,7 +19,7 @@ type Client struct {
 	dest string
 }
 
-func (c *Client) PrintFile(printer string,  doc Document, cf ControlFile, of OutputFormat) (err error) {
+func (c *Client) PrintFile(queue string,  doc Document, cf ControlFile, of OutputFormat) (err error) {
 	// get hostname
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -60,7 +60,7 @@ func (c *Client) PrintFile(printer string,  doc Document, cf ControlFile, of Out
 	defer conn.Close()
 
 	// send receive job command
-	err = SendCommandLine(conn, byte(ReceiveJob), []string{printer})
+	err = SendCommandLine(conn, byte(ReceiveJob), []string{queue})
 	if err != nil {
 		return
 	}
@@ -115,5 +115,74 @@ func (c *Client) PrintFile(printer string,  doc Document, cf ControlFile, of Out
 	return nil
 }
 
+func (c *Client) PrintWaitingJobs(queue string) (err error) {
+	// open connection
+	conn, err := net.Dial("tcp", c.dest)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
 
+	err = SendCommandLine(conn, byte(PrintJobs), []string{queue})
+	if err != nil {
+		return
+	}
+	err = CheckAcknowledge(conn)
+
+	return
+}
+
+func (c *Client) GetQueueStateShort(queue string, jobNumbers, usernames []string) (err error) {
+	conn, err := net.Dial("tcp", c.dest)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	// TODO: send username and job number if given
+	err = SendCommandLine(conn, byte(QueueStatsShort), []string{queue})
+	if err != nil {
+		return
+	}
+
+	// TODO: parse response
+
+	return
+}
+
+func (c *Client) GetQueueStateLong(queue string, jobNumbers, usernames []string) (err error) {
+	conn, err := net.Dial("tcp", c.dest)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	// TODO: send username and job number if given
+	err = SendCommandLine(conn, byte(QueueStatsLong), []string{queue})
+	if err != nil {
+		return
+	}
+
+	// TODO: parse response
+
+	return
+}
+
+//magent is the username making the request
+func (c *Client) RemoveJobs(queue, agent string, jobNumbers, usernames []string) (err error) {
+	conn, err := net.Dial("tcp", c.dest)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	// TODO: send username and job number if given
+	err = SendCommandLine(conn, byte(RemoveJobs), []string{queue, agent})
+	if err != nil {
+		return
+	}
+	err = CheckAcknowledge(conn)
+
+	return
+}
 
