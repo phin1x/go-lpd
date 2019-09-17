@@ -3,6 +3,7 @@ package lpd
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/user"
@@ -42,9 +43,9 @@ func (c *Client) PrintFile(filePath, queue string, cf ControlFile) error {
 	defer document.Close()
 
 	return c.PrintDocument(Document{
-			Document: document,
-			Name:     fileName,
-			Size:     int(fileStats.Size()),
+		Document: document,
+		Name:     fileName,
+		Size:     int(fileStats.Size()),
 	}, queue, cf, PlainTextFile)
 }
 
@@ -56,7 +57,7 @@ func (c *Client) PrintDocument(doc Document, queue string, cf ControlFile, of Ou
 	}
 
 	//get current user
-	currentUser, err:= user.Current()
+	currentUser, err := user.Current()
 	if err != nil {
 		return
 	}
@@ -122,6 +123,10 @@ func (c *Client) PrintDocument(doc Document, queue string, cf ControlFile, of Ou
 	if err != nil {
 		return
 	}
+	_, err = conn.Write([]byte{0})
+	if err != nil {
+		return
+	}
 	if err = CheckAcknowledge(conn); err != nil {
 		return
 	}
@@ -137,6 +142,10 @@ func (c *Client) PrintDocument(doc Document, queue string, cf ControlFile, of Ou
 
 	// send spool file
 	if _, err = io.Copy(conn, doc.Document); err != nil {
+		return
+	}
+	_, err = conn.Write([]byte{0})
+	if err != nil {
 		return
 	}
 	if err = CheckAcknowledge(conn); err != nil {
@@ -163,10 +172,10 @@ func (c *Client) PrintWaitingJobs(queue string) (err error) {
 	return
 }
 
-func (c *Client) GetQueueStateShort(queue string, jobNumbers, usernames []string) (err error) {
+func (c *Client) GetQueueStateShort(queue string, jobNumbers, usernames []string) (state string, err error) {
 	conn, err := net.Dial("tcp", c.dest)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer conn.Close()
 
@@ -176,15 +185,14 @@ func (c *Client) GetQueueStateShort(queue string, jobNumbers, usernames []string
 		return
 	}
 
-	// TODO: parse response
-
-	return
+	data, err := ioutil.ReadAll(conn)
+	return string(data), err
 }
 
-func (c *Client) GetQueueStateLong(queue string, jobNumbers, usernames []string) (err error) {
+func (c *Client) GetQueueStateLong(queue string, jobNumbers, usernames []string) (state string, err error) {
 	conn, err := net.Dial("tcp", c.dest)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer conn.Close()
 
@@ -194,12 +202,11 @@ func (c *Client) GetQueueStateLong(queue string, jobNumbers, usernames []string)
 		return
 	}
 
-	// TODO: parse response
-
-	return
+	data, err := ioutil.ReadAll(conn)
+	return string(data), err
 }
 
-//magent is the username making the request
+// agent is the username making the request
 func (c *Client) RemoveJobs(queue, agent string, jobNumbers, usernames []string) (err error) {
 	conn, err := net.Dial("tcp", c.dest)
 	if err != nil {
@@ -216,4 +223,3 @@ func (c *Client) RemoveJobs(queue, agent string, jobNumbers, usernames []string)
 
 	return
 }
-

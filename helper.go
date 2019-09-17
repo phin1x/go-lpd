@@ -7,19 +7,15 @@ import (
 )
 
 func SendCommandLine(w io.Writer, cmd byte, opts []string) (err error) {
-	_, err = w.Write([]byte{cmd})
-	if err != nil {
-		return
-	}
+	var line []byte
+
+	line = append(line, cmd)
 
 	optString := strings.Join(opts, Separator)
-	_, err = w.Write([]byte(optString))
-	if err != nil {
-		return
-	}
+	line = append(line, []byte(optString)...)
+	line = append(line, []byte(LineEnding)...)
 
-	_, err = w.Write([]byte(LineEnding))
-
+	_, err = w.Write(line)
 	return
 }
 
